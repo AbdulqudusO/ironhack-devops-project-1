@@ -1,9 +1,10 @@
-[README.md](https://github.com/user-attachments/files/33480157/README.md)
+[README (1).md](https://github.com/user-attachments/files/33481412/README.1.md)
 # Ironhack DevOps Project 1 — Multi-Stack Voting App
 
 **Project:** Multi-Stack DevOps Infrastructure Automation  
 **Stack:** AWS · Terraform · Ansible · Docker · Docker Compose  
 **Application source:** [My fork of example-voting-app](https://github.com/AbdulqudusO/example-voting-app)
+**Presentation:** [View project presentation slides](https://drive.google.com/file/d/1nggI8qnl1ZGH_8I7qyXuzrXZo_-ot70c/view?usp=sharing)
 
 ## Project overview
 
@@ -95,6 +96,8 @@ ansible backend -b -a "docker logs worker --tail 20"
 This is a learning/demo deployment. It currently uses HTTP endpoints and a single Availability Zone. Production enhancements would include HTTPS, secrets management, cross-AZ redundancy with real failover, automated backups, centralized monitoring, and CI/CD.
 
 ## References
+
+- [Project presentation slides (Google Drive)](https://drive.google.com/file/d/1nggI8qnl1ZGH_8I7qyXuzrXZo_-ot70c/view?usp=sharing)
 
 - [Infrastructure automation (this repository)](https://github.com/AbdulqudusO/ironhack-devops-project-1)
 - [Voting application source and custom Docker Compose configuration](https://github.com/AbdulqudusO/example-voting-app)
