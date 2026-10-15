@@ -1,0 +1,130 @@
+---
+- name: Deploy Ironhack Voting Application
+  hosts: all
+  become: true
+
+  vars_prompt:
+    - name: db_password
+      prompt: "Enter PostgreSQL password"
+      private: true
+
+  vars:
+    dockerhub_username: "abdulqudus0306"
+
+    redis_host: "{{ hostvars[groups['backend'][0]].private_ip }}"
+    db_host: "{{ hostvars[groups['db'][0]].private_ip }}"
+
+    db_username: "postgres"
+    db_name: "postgres"
+
+  tasks:
+    - name: Install Python Docker SDK
+      ansible.builtin.apt:
+        name: python3-docker
+        state: present
+        update_cache: true
+
+    # --------------------
+    # DATABASE TIER
+    # --------------------
+
+    - name: Start PostgreSQL
+      community.docker.docker_container:
+        name: db
+        image: postgres:15-alpine
+        state: started
+        restart_policy: unless-stopped
+        pull: always
+        published_ports:
+          - "5432:5432"
+        env:
+          POSTGRES_USER: "{{ db_username }}"
+          POSTGRES_PASSWORD: "{{ db_password }}"
+          POSTGRES_DB: "{{ db_name }}"
+        volumes:
+          - "postgres-data:/var/lib/postgresql/data"
+      when: "'db' in group_names"
+
+    # --------------------
+    # BACKEND TIER
+    # --------------------
+
+    - name: Start Redis
+      community.docker.docker_container:
+        name: redis
+        image: redis:alpine
+        state: started
+        restart_policy: unless-stopped
+        pull: always
+        published_ports:
+          - "6379:6379"
+      when: "'backend' in group_names"
+
+    - name: Wait for PostgreSQL from backend
+      ansible.builtin.wait_for:
+        host: "{{ db_host }}"
+        port: 5432
+        timeout: 120
+      when: "'backend' in group_names"
+
+    - name: Start Worker
+      community.docker.docker_container:
+        name: worker
+        image: "{{ dockerhub_username }}/worker:latest"
+        state: started
+        restart_policy: unless-stopped
+        pull: always
+        env:
+          REDIS_HOST: "{{ redis_host }}"
+          DB_HOST: "{{ db_host }}"
+          DB_USERNAME: "{{ db_username }}"
+          DB_PASSWORD: "{{ db_password }}"
+          DB_NAME: "{{ db_name }}"
+      when: "'backend' in group_names"
+
+    # --------------------
+    # APPLICATION TIER
+    # --------------------
+
+    - name: Wait for Redis from application server
+      ansible.builtin.wait_for:
+        host: "{{ redis_host }}"
+        port: 6379
+        timeout: 120
+      when: "'app' in group_names"
+
+    - name: Wait for PostgreSQL from application server
+      ansible.builtin.wait_for:
+        host: "{{ db_host }}"
+        port: 5432
+        timeout: 120
+      when: "'app' in group_names"
+
+    - name: Start Vote application
+      community.docker.docker_container:
+        name: vote
+        image: "{{ dockerhub_username }}/vote:latest"
+        state: started
+        restart_policy: unless-stopped
+        pull: always
+        published_ports:
+          - "8080:80"
+        env:
+          REDIS_HOST: "{{ redis_host }}"
+      when: "'app' in group_names"
+
+    - name: Start Result application
+      community.docker.docker_container:
+        name: result
+        image: "{{ dockerhub_username }}/result:latest"
+        state: started
+        restart_policy: unless-stopped
+        pull: always
+        published_ports:
+          - "8081:80"
+        env:
+          DB_HOST: "{{ db_host }}"
+          DB_USERNAME: "{{ db_username }}"
+          DB_PASSWORD: "{{ db_password }}"
+          DB_NAME: "{{ db_name }}"
+      when: "'app' in group_names"

@@ -1,0 +1,31 @@
+# Terraform generated files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+secrets.yml
+vault-password.txt
+**/.ssh/*
+**/.docker/*
+
+# Ansible temporary files
+*.retry
+
+# Editor and system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Terraform editor backups and saved plans
+*.tfvars*
+tfplan
